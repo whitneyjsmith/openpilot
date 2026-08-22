@@ -16,6 +16,7 @@ from openpilot.common.params import Params
 from openpilot.common.realtime import DT_HW
 from openpilot.selfdrive.selfdrived.alertmanager import set_offroad_alert
 from openpilot.common.hardware import HARDWARE, TICI, PC
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.common.hardware.usb import get_usb_state, set_usb_state
 from openpilot.common.linux import LinuxSystemStats
 from openpilot.system.loggerd.config import get_available_percent
@@ -281,7 +282,8 @@ def hardware_thread(end_event, hw_queue) -> None:
 
     # **** starting logic ****
 
-    startup_conditions["up_to_date"] = params.get("Offroad_ConnectivityNeeded") is None or params.get_bool("DisableUpdates") or params.get_bool("SnoozeUpdate")
+    startup_conditions["up_to_date"] = (params.get("Offroad_ConnectivityNeeded") is None or params.get_bool("DisableUpdates") or
+                                        params.get_bool("SnoozeUpdate") or NETWORK_DISABLED)
     startup_conditions["no_excessive_actuation"] = params.get("Offroad_ExcessiveActuation") is None
     startup_conditions["not_uninstalling"] = not params.get_bool("DoUninstall")
     startup_conditions["accepted_terms"] = params.get("HasAcceptedTerms") == terms_version
@@ -310,7 +312,7 @@ def hardware_thread(end_event, hw_queue) -> None:
     if not PC:
       # we enforce this for our software, but you are welcome
       # to make a different decision in your software
-      startup_conditions["registered_device"] = PC or (params.get("DongleId") != UNREGISTERED_DONGLE_ID)
+      startup_conditions["registered_device"] = PC or NETWORK_DISABLED or (params.get("DongleId") != UNREGISTERED_DONGLE_ID)
 
     # Handle offroad/onroad transition
     should_start = all(onroad_conditions.values())

@@ -5,6 +5,7 @@ import threading
 import time
 
 from openpilot.common.api import api_get
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.common.params import Params
 from openpilot.common.realtime import drop_realtime
 from openpilot.common.swaglog import cloudlog
@@ -47,6 +48,9 @@ class PrimeState:
     return PrimeType.UNKNOWN
 
   def _fetch_prime_status(self) -> None:
+    if NETWORK_DISABLED:
+      return
+
     dongle_id = self._params.get("DongleId")
     if not dongle_id or dongle_id == UNREGISTERED_DONGLE_ID:
       return

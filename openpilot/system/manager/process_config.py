@@ -5,6 +5,7 @@ import platform
 from opendbc.car.structs import car
 from openpilot.common.params import Params
 from openpilot.common.hardware import PC, TICI
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.system.manager.process import PythonProcess, NativeProcess, DaemonProcess
 
 WEBCAM = os.getenv("USE_WEBCAM") is not None
@@ -71,7 +72,7 @@ def not_(*fns):
   return lambda *args: operator.not_(*(fn(*args) for fn in fns))
 
 procs = [
-  DaemonProcess("manage_athenad", "openpilot.system.athena.manage_athenad", "AthenadPid"),
+  DaemonProcess("manage_athenad", "openpilot.system.athena.manage_athenad", "AthenadPid", enabled=not NETWORK_DISABLED),
 
   NativeProcess("loggerd", "openpilot/system/loggerd", ["./loggerd"], logging),
   NativeProcess("encoderd", "openpilot/system/loggerd", ["./encoderd"], only_onroad),
@@ -114,8 +115,8 @@ procs = [
   PythonProcess("hardwared", "openpilot.system.hardware.hardwared", always_run),
   PythonProcess("modem", "openpilot.common.hardware.tici.modem", always_run, enabled=TICI),
   PythonProcess("tombstoned", "openpilot.system.tombstoned", always_run, enabled=not PC),
-  PythonProcess("updated", "openpilot.system.updated.updated", only_offroad, enabled=not PC),
-  PythonProcess("uploader", "openpilot.system.loggerd.uploader", always_run),
+  PythonProcess("updated", "openpilot.system.updated.updated", only_offroad, enabled=(not PC) and (not NETWORK_DISABLED)),
+  PythonProcess("uploader", "openpilot.system.loggerd.uploader", always_run, enabled=not NETWORK_DISABLED),
 
   # debug procs
   NativeProcess("bridge", "openpilot/cereal/messaging", ["./bridge"], notcar),

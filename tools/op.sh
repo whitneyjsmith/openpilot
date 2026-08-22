@@ -103,6 +103,7 @@ function op_check_git() {
   fi
 
   echo "Checking for git lfs files..."
+  # git lfs install
   if [[ $(file -b $OPENPILOT_ROOT/openpilot/selfdrive/modeld/models/dmonitoring_model.onnx) == "data" ]]; then
     echo -e " ↳ [${GREEN}✔${NC}] git lfs files found."
   else

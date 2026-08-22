@@ -3,6 +3,7 @@ import os
 import requests
 from datetime import datetime, timedelta, UTC
 from openpilot.common.hardware.hw import Paths
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.common.version import get_version
 
 API_HOST = os.getenv('API_HOST', 'https://api.commadotai.com')
@@ -45,6 +46,8 @@ class Api:
 
 
 def api_get(endpoint, method='GET', timeout=None, access_token=None, session=None, **params):
+  if NETWORK_DISABLED:
+    raise ConnectionError("outbound network requests are disabled")
   headers = {}
   if access_token is not None:
     headers['Authorization'] = "JWT " + access_token

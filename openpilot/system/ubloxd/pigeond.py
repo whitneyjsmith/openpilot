@@ -13,6 +13,7 @@ from openpilot.common.params import Params
 from openpilot.common.serial import Serial
 from openpilot.common.swaglog import cloudlog
 from openpilot.common.hardware import TICI
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.common.gpio import gpio_init, gpio_set
 from openpilot.common.hardware.tici.pins import GPIO
 
@@ -231,7 +232,7 @@ def init_pigeon(pigeon: TTYPigeon) -> bool:
         pigeon.send_with_ack(msg, ack=UBLOX_ASSIST_ACK)
 
       # try getting AssistNow if we have a token
-      token = Params().get('AssistNowToken')
+      token = None if NETWORK_DISABLED else Params().get('AssistNowToken')
       if token is not None:
         try:
           for msg in get_assistnow_messages(token):

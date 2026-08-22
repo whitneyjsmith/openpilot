@@ -16,6 +16,7 @@ from jeepney.low_level import MessageType
 from jeepney.wrappers import Properties
 
 from openpilot.common.swaglog import cloudlog
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.system.ui.lib.networkmanager import (NM, NM_WIRELESS_IFACE, NM_802_11_AP_SEC_PAIR_WEP40,
                                                     NM_802_11_AP_SEC_PAIR_WEP104, NM_802_11_AP_SEC_GROUP_WEP40,
                                                     NM_802_11_AP_SEC_GROUP_WEP104, NM_802_11_AP_SEC_KEY_MGMT_PSK,
@@ -161,16 +162,17 @@ class WifiManager:
     self._exit = False
 
     # DBus connections
-    try:
-      self._router_main = DBusRouter(open_dbus_connection_threading(bus="SYSTEM"))  # used by scanner / general method calls
-      _wrap_router(self._router_main)
-      self._conn_monitor = open_dbus_connection_blocking(bus="SYSTEM")  # used by state monitor thread
-      self._nm = DBusAddress(NM_PATH, bus_name=NM, interface=NM_IFACE)
-    except FileNotFoundError:
-      cloudlog.exception("Failed to connect to system D-Bus")
-      self._router_main = None
-      self._conn_monitor = None
-      self._exit = True
+    self._router_main: DBusRouter | None = None
+    self._conn_monitor: DBusConnection | None = None
+    self._nm: DBusAddress | None = None
+    if not NETWORK_DISABLED:
+      try:
+        self._router_main = DBusRouter(open_dbus_connection_threading(bus="SYSTEM"))  # used by scanner / general method calls
+        _wrap_router(self._router_main)
+        self._conn_monitor = open_dbus_connection_blocking(bus="SYSTEM")  # used by state monitor thread
+        self._nm = DBusAddress(NM_PATH, bus_name=NM, interface=NM_IFACE)
+      except FileNotFoundError:
+        cloudlog.exception("Failed to connect to system D-Bus")
 
     # Store wifi device path
     self._wifi_device: str | None = None
@@ -203,6 +205,11 @@ class WifiManager:
     self._scan_lock = threading.Lock()
     self._scan_thread = threading.Thread(target=self._network_scanner, daemon=True)
     self._state_thread = threading.Thread(target=self._monitor_state, daemon=True)
+
+    if NETWORK_DISABLED:
+      self._exit = True
+      return
+
     self._initialize()
     atexit.register(self.stop)
 

@@ -20,3 +20,6 @@ if [ -z "$AGNOS_VERSION" ]; then
 fi
 
 export STAGING_ROOT="/data/safe_staging"
+
+# fully disable wi-fi and all outbound network requests (set to "0" to re-enable)
+export DISABLE_NETWORK="1"

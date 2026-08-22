@@ -3,6 +3,7 @@ import sentry_sdk
 from enum import Enum
 from sentry_sdk.integrations.threading import ThreadingIntegration
 
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.common.params import Params
 from openpilot.system.athena.registration import is_registered_device
 from openpilot.common.hardware import HARDWARE, PC
@@ -45,7 +46,7 @@ def init(project: SentryProject) -> bool:
   build_metadata = get_build_metadata()
   # forks like to mess with this, so double check
   comma_remote = build_metadata.openpilot.comma_remote and "commaai" in build_metadata.openpilot.git_origin
-  if not comma_remote or not is_registered_device() or PC:
+  if not comma_remote or not is_registered_device() or PC or NETWORK_DISABLED:
     return False
 
   env = "release" if build_metadata.tested_channel else "master"

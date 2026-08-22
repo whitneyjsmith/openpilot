@@ -5,6 +5,7 @@ from collections.abc import Callable
 from enum import Enum
 
 from openpilot.common.params import Params
+from openpilot.common.network import NETWORK_DISABLED
 from openpilot.system.ui.lib.application import gui_app, FontWeight
 from openpilot.system.ui.lib.multilang import tr, tr_noop
 from openpilot.system.ui.lib.text_measure import measure_text_cached
@@ -53,6 +54,9 @@ class SshKeyFetcher:
 
   def _fetch_thread(self, username: str):
     try:
+      if NETWORK_DISABLED:
+        raise ConnectionError("outbound network requests are disabled")
+
       response = requests.get(f"https://github.com/{username}.keys", timeout=self.HTTP_TIMEOUT)
       response.raise_for_status()
       keys = response.text.strip()
