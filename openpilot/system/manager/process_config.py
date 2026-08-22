@@ -20,8 +20,7 @@ def iscar(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started and not CP.notCar
 
 def logging(started: bool, params: Params, CP: car.CarParams) -> bool:
-  run = (not CP.notCar) or not params.get_bool("DisableLogging")
-  return started and run
+  return started and not params.get_bool("DisableLogging")
 
 def ublox_available() -> bool:
   return os.path.exists('/dev/ttyHS0') and not os.path.exists('/persist/comma/use-quectel-gps')
@@ -113,14 +112,14 @@ procs = [
   PythonProcess("lateral_maneuversd", "openpilot.tools.lateral_maneuvers.lateral_maneuversd", lat_maneuver),
   PythonProcess("radard", "openpilot.selfdrive.controls.radard", only_onroad),
   PythonProcess("hardwared", "openpilot.system.hardware.hardwared", always_run),
-  PythonProcess("modem", "openpilot.common.hardware.tici.modem", always_run, enabled=TICI),
+  PythonProcess("modem", "openpilot.common.hardware.tici.modem", always_run, enabled=TICI and (not NETWORK_DISABLED)),
   PythonProcess("tombstoned", "openpilot.system.tombstoned", always_run, enabled=not PC),
   PythonProcess("updated", "openpilot.system.updated.updated", only_offroad, enabled=(not PC) and (not NETWORK_DISABLED)),
   PythonProcess("uploader", "openpilot.system.loggerd.uploader", always_run, enabled=not NETWORK_DISABLED),
 
   # debug procs
   NativeProcess("bridge", "openpilot/cereal/messaging", ["./bridge"], notcar),
-  PythonProcess("webrtcd", "openpilot.system.webrtc.webrtcd", or_(and_(livestream, not_(iscar)), notcar)),
+  PythonProcess("webrtcd", "openpilot.system.webrtc.webrtcd", and_(or_(and_(livestream, not_(iscar)), notcar), not_(lambda *args: NETWORK_DISABLED))),
   PythonProcess("joystick", "openpilot.tools.joystick.joystick_control", and_(joystick, iscar)),
 ]
 

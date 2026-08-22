@@ -26,6 +26,11 @@ function agnos_init {
     fi
     $DIR/openpilot/common/hardware/tici/updater $AGNOS_PY $MANIFEST
   fi
+
+  # block all network egress/ingress when running offline (after AGNOS flash so OS updates still work)
+  if [ "${DISABLE_NETWORK}" = "1" ]; then
+    sudo "$DIR/scripts/offline_firewall.sh" || echo "warning: failed to apply offline firewall" >&2
+  fi
 }
 
 function launch {
